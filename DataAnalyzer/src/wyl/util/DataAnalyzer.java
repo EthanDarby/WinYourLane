@@ -347,67 +347,10 @@ public class DataAnalyzer {
 	 * @param detailsIn MatchDetails to anaylze.
 	 */
 	public void analyzeChampionDataFromMatch(MatchDetail detailsIn){
-		//Go through each champion and update their tables appropriately
-		List<Participant> participants = detailsIn.getParticipants();
+		//get the tier
+		//enum tier = getMatchTier(detailsIn);
 		
-		for(Participant participant:participants){
-			//get champ name from database
-			int championId = participant.getChampionId();
-			int teamId = participant.getTeamId();
-			long kills = 0;
-			long deaths = 0;
-			
-			String lane = participant.getTimeline().getLane();
-			
-			int counterId = 0;
-			long counterKills = 0;
-			long counterDeaths = 0;
-			
-			ParticipantTimeline timelineData = participant.getTimeline();
-			ParticipantStats stats = participant.getStats();
-			boolean results = stats.isWinner();
-			kills = stats.getKills();
-			deaths = stats.getDeaths();
-			
-			//find the counter
-			
-			for(Participant counter:participants){
-				String counterLane = counter.getTimeline().getLane();
-				int counterTeam = counter.getTeamId();
-				if(counterLane.equals(lane) && counterTeam != teamId){
-					System.out.println("Found counter");
-					counterId = counter.getChampionId();
-					counterKills = counter.getStats().getKills();
-					counterDeaths = counter.getStats().getDeaths();
-				}
-			}
-			
-			if(counterId == 0){
-				System.out.println("NO COUNTER FOUND FOR: ");
-				System.out.println(championId + " - " + lane);
-				System.out.println("Why?");
-			}
-			else{
-				//now that we have the champ and counter, lets get their names and print the data
-				MongoClient mongoClient = new MongoClient();
-				DB database = mongoClient.getDB("LeagueData");
-				DBCollection matchDataCollection = database.getCollection("ChampionData");
-				DBCursor champ = matchDataCollection.find(new BasicDBObject("champId",championId));
-				DBCursor counter = matchDataCollection.find(new BasicDBObject("champId",counterId));
-				String champName = champ.next().get("name").toString();
-				String counterName = counter.next().get("name").toString();
-			
-				System.out.println("SUMMARY FOR A CHAMPION");
-				System.out.println(champName + " vs " + counterName);
-				System.out.println("Kills: " + kills + " - " + counterKills);
-				System.out.println("Deaths: " + deaths + " - " + counterDeaths);
-				System.out.println("Results: " + results + " - " + !results);
-			
-				System.out.println("Finished");
-			
-			
-			}
-		}
+				
 	}
 
 	public void updateChampionData(Participant championIn, String tierIn){
