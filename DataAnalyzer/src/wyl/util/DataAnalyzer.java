@@ -409,9 +409,69 @@ public class DataAnalyzer {
 			}
 		}
 	}
+
+	public void updateChampionData(Participant championIn, String tierIn){
+		
+		//update relevant tier in the ChampionData table with the stats from this match for this champion
+		long kills = championIn.getStats().getKills();
+		long deaths = championIn.getStats().getDeaths();
+		long assists = championIn.getStats().getAssists();
+		boolean isWinner = false;
+		long minionCS = championIn.getStats().getMinionsKilled();
+		
+		isWinner = championIn.getStats().isWinner();
+		
+		if(isWinner){
+			//update winner column
+		}
+		
+		else{
+			//just update the other numbers, but it's not a win
+		}
+		
+	}
 	
-	
-	
+	public void updateChampionCounterData(MatchDetail detailsIn, String tierIn){
+		
+		//for each champion, analyze their data relevant to their counter and tier
+		
+		//try to find a counter for each one, if there is no counter, then take a guess or just add it and forget, depends how often this happens
+		
+		//1)split the participant lists into team
+		List<Participant> team100 = new ArrayList<Participant>();
+		List<Participant> team200 = new ArrayList<Participant>();
+		
+		for(Participant aPlayer:detailsIn.getParticipants()){
+			
+			if(aPlayer.getTeamId() == 100){
+				team100.add(aPlayer);
+			}
+			else{
+				team200.add(aPlayer);
+			}			
+		}
+		//now, for each champion, update their entry in the database
+		for(Participant aPlayer: team100){
+			
+			for(Participant counter:team200){
+				
+				boolean counterFound = false;
+				if(aPlayer.getTimeline().getLane() == counter.getTimeline().getLane()){
+					
+					//they should also have the same role, this is espeically true in bot supp/dc
+					if(aPlayer.getTimeline().getRole() == counter.getTimeline().getRole()){
+						counterFound = true;
+						//NOW SAVE TO DB
+					}					
+				}
+				
+				if(!counterFound){
+					//if we never found a counter for whatever reason, don't update the table
+					//store this somewhere for futher investigation
+				}
+			}
+		}
+	}
 		
 		
 	
