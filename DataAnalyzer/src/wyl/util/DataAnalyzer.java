@@ -3,6 +3,10 @@ package wyl.util;
 
 import java.util.Date;
 import java.io.Console;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +79,12 @@ public class DataAnalyzer {
 	final int MASTER_VALUE = 60;
 	final int CHALLENGER_VALUE = 70;
 	
+	 double BRZ_UPR_BND = 0;
+	 double SLVR_UPR_BND = 0;
+	 double GLD_UPR_BND = 0;
+	 double PLT_UPR_BND= 0;
+	 double DMND_UPR_BND = 0;
+	 double MSTR_UPR_BND = 0;
 	
 	
 	/**Determines the tier of the match by applying an algorithm based on previous season rank and current season.
@@ -82,7 +93,7 @@ public class DataAnalyzer {
 	 * @return Returns tier value for the match.
 	 * 
 	 */
-	public double getMatchTier(MatchDetail detailsIn){
+	public double getMatchTierValue(MatchDetail detailsIn){
 		//The algorithm is (0.5 * previousTierValue) + (cuurentTierValue * (1 + (1 - 0.division))
 				// For example, a previous season rank of BRONZE_VALUE and current rank of SILVER_VALUE 2 would be
 				// (0.5 * 10) + (20 * (1 + (1 - 0.2)) = 5 + (20 * 1.8) = 41
@@ -237,7 +248,7 @@ public class DataAnalyzer {
 	public void analyzeTierDataFromMatch(MatchDetail detailsIn){
 		
 		//first, get the tier that the match is in
-		double tier_value = getMatchTier(detailsIn);
+		double tier_value = getMatchTierValue(detailsIn);
 		
 		//get raw data
 		//Total Kills
@@ -406,7 +417,46 @@ public class DataAnalyzer {
 		}
 	}
 		
-		/**\
+	
+	public String getTier(MatchDetail detailsIn){
+		String tier = "None";
+		
+		double value = getMatchTierValue(detailsIn);
+		
+		//find the string value based on ranges
+		if(value < BRZ_UPR_BND){
+			tier = "BRONZE";
+		}
+		
+		else if(value > BRZ_UPR_BND && value < SLVR_UPR_BND){
+			tier = "SILVER";
+		}
+		
+		else if(value > SLVR_UPR_BND && value < GLD_UPR_BND){
+			tier = "GOLD";
+		}
+		
+		else if(value > GLD_UPR_BND && value < PLT_UPR_BND){
+			tier = "PLATINUM";
+		}
+		
+		else if(value > PLT_UPR_BND && value < DMND_UPR_BND){
+			tier = "DIAMOND";
+		}
+		
+		else if(value > DMND_UPR_BND && value < MSTR_UPR_BND){
+			tier="MASTER";
+		}
+		
+		else if(value > MSTR_UPR_BND){
+			tier = "CHALLENGER";
+		}
+		
+		return tier;
+	}
+	
+	
+	/**\
 		 * Gets the current status of the Riot API limit.
 		 * @return Returns a True if the API is ok to use, False if it is at the limit and must wait.
 		 */
@@ -441,7 +491,17 @@ public class DataAnalyzer {
 				
 				analyzeTierDataFromMatch(matchDetail);
 				
+				String tier = getTier(matchDetail);
 				
+				//for each champion, update their table
+				for(Participant champ:matchDetail.getParticipants()){
+					updateChampionData(champ, tier);
+				}
+				
+				//update champion counter table
+				updateChampionCounterData(matchDetail, tier);
+				
+				//finally, if nothing has gone wrong and the match is analyzed, make sure we set the flag
 			} catch (RiotApiException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -452,26 +512,49 @@ public class DataAnalyzer {
 		
 	}
 
-
+	/**
+	 * Load the values from the config.properties file.
+	 */
+	public void loadConfig(){
+		Properties properties = new Properties();
+		String propertiesFileName = "config.properties";
+		InputStream input;
+		
+		
+		try {
+			input = new FileInputStream(propertiesFileName);
+			properties.load(input);
+		} 
+		catch (FileNotFoundException e) {	
+			e.printStackTrace();
+			System.out.println(e.getMessage());
+			
+		}
+		
+		catch(IOException error){
+			error.printStackTrace();
+			System.out.println(error.getMessage());
+		}
+		
+		
+		
+		BRZ_UPR_BND = Double.parseDouble(properties.getProperty("bronze_upperBound"));
+		SLVR_UPR_BND = Double.parseDouble(properties.getProperty("silver_upperBound"));
+		GLD_UPR_BND = Double.parseDouble(properties.getProperty("gold_upperBound"));
+		PLT_UPR_BND = Double.parseDouble(properties.getProperty("platinum_upperBound"));
+		DMND_UPR_BND = Double.parseDouble(properties.getProperty("diamond_upperBound"));
+		MSTR_UPR_BND = Double.parseDouble(properties.getProperty("master_upperBound"));
+	}
 
 	public static void main(String[] args) {
 		//MongoDB objects 
 		MongoClient client = new MongoClient();
 		DB db = client.getDB("LeagueData");
+	
 		
-		
-		// TODO Auto-generated method stub
 		DataAnalyzer driver = new DataAnalyzer();
-		//driver.analyzeTierData();
-		
-		//test for the analyze tier method
-		try {
-			MatchDetail details = new RiotApi("2c6decef-0974-4fda-b5d1-d0470cab8a89").getMatch(2026976873);
-			driver.getMatchTier(details);
-		} catch (RiotApiException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		driver.loadConfig();
+
 			
 		//PROD LOGIC START
 		while(true){
@@ -488,6 +571,10 @@ public class DataAnalyzer {
 					driver.analyzeMatch(matchId);
 				}
 				
+			}
+			
+			else{
+				//matchQueue is empty
 			}
 		}
 		
