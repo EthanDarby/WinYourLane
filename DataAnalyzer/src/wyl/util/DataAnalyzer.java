@@ -234,7 +234,7 @@ public class DataAnalyzer {
 	 * 
 	 * @param detailsIn MatchDetails to analyze.
 	 */
-	public void analyzeTierDataFrommatch(MatchDetail detailsIn){
+	public void analyzeTierDataFromMatch(MatchDetail detailsIn){
 		
 		//first, get the tier that the match is in
 		double tier_value = getMatchTier(detailsIn);
@@ -394,7 +394,7 @@ public class DataAnalyzer {
 					//they should also have the same role, this is espeically true in bot supp/dc
 					if(aPlayer.getTimeline().getRole() == counter.getTimeline().getRole()){
 						counterFound = true;
-						//NOW SAVE TO DB
+						//NOW SAVE TO DB (UPDATES ALWAYS, NO OVERWRITES)
 					}					
 				}
 				
@@ -406,79 +406,53 @@ public class DataAnalyzer {
 		}
 	}
 		
+		/**\
+		 * Gets the current status of the Riot API limit.
+		 * @return Returns a True if the API is ok to use, False if it is at the limit and must wait.
+		 */
+	public boolean getApiStatus(){
+		boolean apiAvailable = false;
+		MongoClient client = new MongoClient();
+		DB db = client.getDB("matchQueue");
 		
-	
-	/** Analyzes all the matches in the database 
-	 * @param None
-	 * @return None
-	 */
-	/*
-	@SuppressWarnings("all")
-	public void analyzeTierData(){
-		MongoClient mongoClient = new MongoClient();
-		DB database = mongoClient.getDB("LeagueData");
-		DBCollection matchDataCollection = database.getCollection("MatchData");
-		DBCursor cursor  = matchDataCollection.find();
-		Morphia morphia = new Morphia();
-		Datastore ds = morphia.createDatastore(mongoClient,"LeagueData");
-		morphia.map(MatchData.class);
 		
-		//iterate through each matchData object and save what needs to be saved
-		int i = 0;
-		System.out.println("Starting matchData loop");
-		int pre2015Matches = 0;
-		int season2015Matches = 0;
-		int pre2016Matches = 0;
-		try{
-		while(cursor.hasNext()){
-			DBObject temp = cursor.next();
-			
-			MatchData match = morphia.fromDBObject(MatchData.class, temp);
-			System.out.println("MatchId: " + match.matchID);
-			MatchDetail details = match.details;
-			String season = null;
-			season = details.getSeason();
-			
-			switch (season){
-			
-			case "PRESEASON2015":
-				pre2015Matches++;
-				break;
-			
-			case "SEASON2015":   
-				season2015Matches++;
-				break;
-				
-			case "PRESEASON2016":
-				//do analysis on current matches
-				pre2016Matches++;
-				this.analyzeChampionDataFromMatch(details);
-			
-				break;
-			
-			}
-			//1) Save the info for each player
-			//2) Save the info for each champion
-			//3) Save the info for each tier
-			//4) Mark as analyzed
-			i++;
-			
-		}
-		}
-		catch(Exception error){
-			System.out.println("Error");
-			System.out.println(error.getMessage());
-		}
 		
-		System.out.println("Total Matches Analyzed: " + i);
-		System.out.println("Preseason 2015: " + pre2015Matches);
-		System.out.println("Season 2015: " + season2015Matches);
-		System.out.println("Preseason 2016: " + pre2016Matches);
+		return apiAvailable;
 	}
-	*/
 	
-	
-	
+	/**
+	 * Analyze the match given the matchID
+	 * @param matchId The ID of the match to be analyzed.
+	 */
+	public void analyzeMatch(long matchId){
+		
+		//check rate limit
+		//then analyze match
+		// Analyze on a champion counter basis
+		// Analyze on a champion tier basis (banned, played, win, loss, KDA, etc)
+		// Analyze on a tier basis (time, kills, dragons, barons, etc)
+		RiotApi api = new RiotApi("2c6decef-0974-4fda-b5d1-d0470cab8a89");
+		
+		if(getApiStatus()){
+			
+			//get the MatchDetail from Riot
+			try {
+				MatchDetail matchDetail = api.getMatch(matchId);
+				
+				analyzeTierDataFromMatch(matchDetail);
+				
+				
+			} catch (RiotApiException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+		
+	}
+
+
 
 	public static void main(String[] args) {
 		//MongoDB objects 
@@ -499,7 +473,23 @@ public class DataAnalyzer {
 			e.printStackTrace();
 		}
 			
-		//start a loop that monitors the queue, updating and analyzing when things are put there
+		//PROD LOGIC START
+		while(true){
+			long count = db.getCollection("matchQueue").count();
+			if(count > 0){
+				//get all of the matches and send send them on to get analyzed
+				//it's up to the method to determine the status of the api limits
+				DBCursor cursor = db.getCollection("matchQueue").find();
+				
+				while(cursor.hasNext()){
+					//get a matchID
+					DBObject match = cursor.next();
+					long matchId = (long) match.get("matchId");
+					driver.analyzeMatch(matchId);
+				}
+				
+			}
+		}
 		
 	}
 
