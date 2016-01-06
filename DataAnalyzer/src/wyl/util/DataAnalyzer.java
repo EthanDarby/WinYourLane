@@ -65,6 +65,7 @@ import org.mongodb.morphia.query.Query;
  */
 public class DataAnalyzer {
 	
+	//These constants are the numeric values that are used when calculating the overall tier of the match
 	final int BRONZE_VALUE = 10;
 	final int SILVER_VALUE = 20;
 	final int GOLD_VALUE = 30;
@@ -328,17 +329,6 @@ public class DataAnalyzer {
 			barons+=team.getBaronKills();
 		}
 		return barons;
-	}
-	
-	
-	
-	/**Determines how an individual player did in a given match.
-	 * 
-	 * @param detailsIn MatchDetails to analyze for a given player.
-	 * @param summonerID Long representing the summoner's ID to get data for.
-	 */
-	public void analyzePlayerDataFromMatch(MatchDetail detailsIn, long summonerID){		
-		
 	}
 	
 	
