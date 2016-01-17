@@ -262,10 +262,11 @@ public class DataAnalyzer {
 		long cs = kills_deaths_assists_cs[3];
 		
 		
-		//getDragons(MatchDetail detailsIn);
+		long totalDragons = getDragons(detailsIn.getTeams());
+		long totalBarons = getBarons(detailsIn.getTeams());
 		//getGameTime(MatchDetail detailsIn);
 		
-		//have to write own functino for getting rift heralds from riot api json object
+		//have to write own function for getting rift heralds from riot api json object
 		//getRiftHeralds(MatchDetail detailsIn);
 		//getTimeFirstRiftHerals(MatchDetails detailsIn);
 		
@@ -338,7 +339,7 @@ public class DataAnalyzer {
 	 */
 	public void analyzeChampionDataFromMatch(MatchDetail detailsIn){
 		//get the tier
-		//enum tier = getMatchTier(detailsIn);
+		//NOT DONE
 		
 				
 	}
