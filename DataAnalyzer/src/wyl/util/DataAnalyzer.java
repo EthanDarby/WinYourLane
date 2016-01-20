@@ -24,6 +24,7 @@ import com.google.gson.*;
 import constant.Region;
 import dto.Champion.Champion;
 import dto.League.League;
+import dto.Match.BannedChampion;
 import dto.Match.MatchDetail;
 import dto.Match.Participant;
 import dto.Match.ParticipantIdentity;
@@ -62,6 +63,14 @@ import org.mongodb.morphia.*;
 import org.mongodb.morphia.query.Query;
 
 
+//NOTES
+/*Version 0.45
+ * Ethan Darby
+ * Most of the logic is at a foundational level. Need to add in actual saving, getting from the db. 
+ * Also need to add in error handling and logging. Not required for initial, but is required for prod.
+ */
+
+
 
 /** Class for doing various analysis on the data contained in the database.
  * 
@@ -85,6 +94,9 @@ public class DataAnalyzer {
 	 double PLT_UPR_BND= 0;
 	 double DMND_UPR_BND = 0;
 	 double MSTR_UPR_BND = 0;
+	 
+	 String RIOT_API_KEY;
+	 String MONGO_CONNECTION_STRING;
 	
 	
 	/**Determines the tier of the match by applying an algorithm based on previous season rank and current season.
@@ -250,20 +262,6 @@ public class DataAnalyzer {
 		//first, get the tier that the match is in
 		double tier_value = getMatchTierValue(detailsIn);
 		
-		//get raw data
-		//Total Kills
-		//Total Deaths
-		//Total Assists
-		//Total Creeps
-		//Total Dragons
-		//Total Barons
-		//Total GameTime
-		//Total Rift Heralds
-		//Time of First Dragon
-		//Time of First Blood
-		//Time of First Baron
-		//Time of First Rift Herald
-		
 		long[] kills_deaths_assists_cs = new long[4];
 		kills_deaths_assists_cs = getTotalKDAandCS(detailsIn.getParticipants());
 		
@@ -271,22 +269,61 @@ public class DataAnalyzer {
 		long deaths = kills_deaths_assists_cs[1];
 		long assists = kills_deaths_assists_cs[2];
 		long cs = kills_deaths_assists_cs[3];
-		
-		
 		long totalDragons = getDragons(detailsIn.getTeams());
 		long totalBarons = getBarons(detailsIn.getTeams());
-		//getGameTime(MatchDetail detailsIn);
+		long matchDuration = detailsIn.getMatchDuration();
+		boolean[] winningTeamFirsts = new boolean[4];
 		
-		//have to write own function for getting rift heralds from riot api json object
-		//getRiftHeralds(MatchDetail detailsIn);
-		//getTimeFirstRiftHerals(MatchDetails detailsIn);
-		
-		//getTimeFirstDragon(MatchDetail detailsIn);
-		//getTimeFirstBlood(MatchDetail detailsIn);
-		//getTimeFirstBaron(MatchDetail detailsIn);
-		
+		//get the appropriate mongo data and update it
+		MongoClient client = new MongoClient(MONGO_CONNECTION_STRING);
+		DB db = client.getDB("TierData");
+		//get the data, add in the new values, save it
+		//SAVE HERE
 		
 		
+		//call the method to update the bans for each team\
+		updateMatchBans(detailsIn.getTeams(), getTier(detailsIn));
+		
+		client.close();
+		
+	}
+	
+	/**
+	 * Updates the champion entries for each champion that was banned in this match.
+	 * @param detailsIn
+	 */
+	public boolean updateMatchBans(List<Team> teams, String tierIn){
+		boolean successfulUpdates = true;
+		for(Team team:teams){
+			for(BannedChampion banned:team.getBans()){
+				int bannedChampId = banned.getChampionId();
+				//update database for this champ with a ban
+				//SAVE HERE
+			}
+		}
+		return successfulUpdates;
+	}
+	/**
+	 * Determines the values of FirstBlood, FirstDragon, FirstTower, and FirstBaron for the winning team.
+	 * @param teams
+	 * @return Returns a list of bools representing FirstBlood, FirstDragon, First Tower, and FirstBaron for the winning team.
+	 */
+	public boolean[] getWinningTeamStats(List<Team> teams){
+		//The default value of the primitive type boolean is false.
+		boolean[] frstBld_frstDrgn_frstTwr_frstBrn = new boolean[4];
+		
+		for(Team team:teams){
+			
+			if(team.isWinner()){
+				frstBld_frstDrgn_frstTwr_frstBrn[0] = team.isFirstBlood();
+				frstBld_frstDrgn_frstTwr_frstBrn[1] = team.isFirstDragon();
+				frstBld_frstDrgn_frstTwr_frstBrn[2] = team.isFirstTower();
+				frstBld_frstDrgn_frstTwr_frstBrn[3] = team.isFirstBaron();
+			}
+			
+		}
+		
+		return frstBld_frstDrgn_frstTwr_frstBrn;
 	}
 	
 	/**Gets the total kills, deaths, assists, and creep score for the game.
@@ -349,8 +386,16 @@ public class DataAnalyzer {
 	 * @param detailsIn MatchDetails to anaylze.
 	 */
 	public void analyzeChampionDataFromMatch(MatchDetail detailsIn){
-		//get the tier
-		//NOT DONE
+		String tier = getTier(detailsIn);
+		
+		//for each champion, update their "tier" table
+		for(Participant champ:detailsIn.getParticipants()){
+			
+			updateChampionData(champ,tier);
+		}
+		
+		
+		updateChampionCounterData(detailsIn,tier);
 		
 				
 	}
@@ -412,7 +457,7 @@ public class DataAnalyzer {
 				
 				if(!counterFound){
 					//if we never found a counter for whatever reason, don't update the table
-					//store this somewhere for futher investigation
+					//store this somewhere for further investigation
 				}
 			}
 		}
@@ -459,15 +504,15 @@ public class DataAnalyzer {
 	
 	/**\
 		 * Gets the current status of the Riot API limit.
-		 * @return Returns a True if the API is ok to use, False if it is at the limit and must wait.
+		 * @return Returns a True if the API is good to use, False if it is at the limit and must wait.
 		 */
 	public boolean getApiStatus(){
 		boolean apiAvailable = false;
-		MongoClient client = new MongoClient();
+		MongoClient client = new MongoClient(MONGO_CONNECTION_STRING);
 		DB db = client.getDB("matchQueue");
+		//get the value
 		
-		
-		
+		client.close();
 		return apiAvailable;
 	}
 	
@@ -482,25 +527,21 @@ public class DataAnalyzer {
 		// Analyze on a champion counter basis
 		// Analyze on a champion tier basis (banned, played, win, loss, KDA, etc)
 		// Analyze on a tier basis (time, kills, dragons, barons, etc)
-		RiotApi api = new RiotApi("2c6decef-0974-4fda-b5d1-d0470cab8a89");
+		RiotApi api = new RiotApi(RIOT_API_KEY);
 		
 		if(getApiStatus()){
 			
 			//get the MatchDetail from Riot
 			try {
 				MatchDetail matchDetail = api.getMatch(matchId);
-				
+				String tier = getTier(matchDetail);
 				analyzeTierDataFromMatch(matchDetail);
 				
-				String tier = getTier(matchDetail);
 				
-				//for each champion, update their table
-				for(Participant champ:matchDetail.getParticipants()){
-					updateChampionData(champ, tier);
-				}
 				
-				//update champion counter table
-				updateChampionCounterData(matchDetail, tier);
+				//update the champion data 
+				analyzeChampionDataFromMatch(matchDetail);
+
 				
 				//finally, if nothing has gone wrong and the match is analyzed, make sure we set the flag
 			} catch (RiotApiException e) {
@@ -525,6 +566,18 @@ public class DataAnalyzer {
 		try {
 			input = new FileInputStream(propertiesFileName);
 			properties.load(input);
+			
+			
+			BRZ_UPR_BND = Double.parseDouble(properties.getProperty("bronze_upperBound"));
+			SLVR_UPR_BND = Double.parseDouble(properties.getProperty("silver_upperBound"));
+			GLD_UPR_BND = Double.parseDouble(properties.getProperty("gold_upperBound"));
+			PLT_UPR_BND = Double.parseDouble(properties.getProperty("platinum_upperBound"));
+			DMND_UPR_BND = Double.parseDouble(properties.getProperty("diamond_upperBound"));
+			MSTR_UPR_BND = Double.parseDouble(properties.getProperty("master_upperBound"));
+			RIOT_API_KEY = properties.getProperty("riot_api_key").toString();
+			MONGO_CONNECTION_STRING = properties.getProperty("connectionString").toString();
+			
+			
 		} 
 		catch (FileNotFoundException e) {	
 			e.printStackTrace();
@@ -536,30 +589,24 @@ public class DataAnalyzer {
 			error.printStackTrace();
 			System.out.println(error.getMessage());
 		}
+				
 		
-		
-		
-		BRZ_UPR_BND = Double.parseDouble(properties.getProperty("bronze_upperBound"));
-		SLVR_UPR_BND = Double.parseDouble(properties.getProperty("silver_upperBound"));
-		GLD_UPR_BND = Double.parseDouble(properties.getProperty("gold_upperBound"));
-		PLT_UPR_BND = Double.parseDouble(properties.getProperty("platinum_upperBound"));
-		DMND_UPR_BND = Double.parseDouble(properties.getProperty("diamond_upperBound"));
-		MSTR_UPR_BND = Double.parseDouble(properties.getProperty("master_upperBound"));
 	}
 
 	public static void main(String[] args) {
-		//MongoDB objects 
-		MongoClient client = new MongoClient();
-		DB db = client.getDB("LeagueData");
+		
 	
 		
 		DataAnalyzer driver = new DataAnalyzer();
 		driver.loadConfig();
-
-			
+		//MongoDB objects 
+		MongoClient client = new MongoClient(driver.MONGO_CONNECTION_STRING);
+		DB db = client.getDB("LeagueData");
+					
 		//PROD LOGIC START
 		while(true){
 			long count = db.getCollection("matchQueue").count();
+			
 			if(count > 0){
 				//get all of the matches and send send them on to get analyzed
 				//it's up to the method to determine the status of the api limits
@@ -576,8 +623,11 @@ public class DataAnalyzer {
 			
 			else{
 				//matchQueue is empty
+				//wait and then start back up?
 			}
 		}
+		
+		
 		
 	}
 
