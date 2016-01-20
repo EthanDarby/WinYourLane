@@ -1,0 +1,33 @@
+<!-- Use this file to deploy some handlers/chains and services      -->
+<!-- Two ways to do this:                                           -->
+<!--   java org.apache.axis.client.AdminClient deploy.wsdd          -->
+<!--      after the axis server is running                          -->
+<!-- or                                                             -->
+<!--   java org.apache.axis.utils.Admin client|server deploy.wsdd   -->
+<!--      from the same directory that the Axis engine runs         -->
+
+<deployment
+    xmlns="http://xml.apache.org/axis/wsdd/"
+    xmlns:java="http://xml.apache.org/axis/wsdd/providers/java">
+
+  <!-- Services from LeagueServiceService WSDL service -->
+
+  <service name="LeagueService" provider="java:RPC" style="wrapped" use="literal">
+      <parameter name="wsdlTargetNamespace" value="http://svc.wyl"/>
+      <parameter name="wsdlServiceElement" value="LeagueServiceService"/>
+      <parameter name="schemaQualified" value="http://svc.wyl"/>
+      <parameter name="wsdlServicePort" value="LeagueService"/>
+      <parameter name="className" value="wyl.svc.LeagueServiceSoapBindingImpl"/>
+      <parameter name="wsdlPortType" value="LeagueService"/>
+      <parameter name="typeMappingVersion" value="1.2"/>
+      <operation name="getAllTierData" qname="operNS:getAllTierData" xmlns:operNS="http://svc.wyl" returnQName="retNS:getAllTierDataReturn" xmlns:retNS="http://svc.wyl" returnType="rtns:string" xmlns:rtns="http://www.w3.org/2001/XMLSchema" soapAction="" >
+      </operation>
+      <operation name="getCounterInfo" qname="operNS:getCounterInfo" xmlns:operNS="http://svc.wyl" returnQName="retNS:getCounterInfoReturn" xmlns:retNS="http://svc.wyl" returnType="rtns:string" xmlns:rtns="http://www.w3.org/2001/XMLSchema" soapAction="" >
+        <parameter qname="pns:championNameIn" xmlns:pns="http://svc.wyl" type="tns:string" xmlns:tns="http://www.w3.org/2001/XMLSchema"/>
+      </operation>
+      <operation name="getWylInfo" qname="operNS:getWylInfo" xmlns:operNS="http://svc.wyl" returnQName="retNS:getWylInfoReturn" xmlns:retNS="http://svc.wyl" returnType="rtns:string" xmlns:rtns="http://www.w3.org/2001/XMLSchema" soapAction="" >
+      </operation>
+      <parameter name="allowedMethods" value="getWylInfo getCounterInfo getAllTierData"/>
+
+  </service>
+</deployment>

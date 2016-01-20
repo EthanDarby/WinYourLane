@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://svc.wyl" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="http://svc.wyl" xmlns:intf="http://svc.wyl" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--WSDL created by Apache Axis version: 1.4
+Built on Apr 22, 2006 (06:55:48 PDT)-->
+ <wsdl:types>
+  <schema elementFormDefault="qualified" targetNamespace="http://svc.wyl" xmlns="http://www.w3.org/2001/XMLSchema">
+   <element name="getAllTierData">
+    <complexType/>
+   </element>
+   <element name="getAllTierDataResponse">
+    <complexType>
+     <sequence>
+      <element name="getAllTierDataReturn" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getCounterInfo">
+    <complexType>
+     <sequence>
+      <element name="championNameIn" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getCounterInfoResponse">
+    <complexType>
+     <sequence>
+      <element name="getCounterInfoReturn" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getWylInfo">
+    <complexType/>
+   </element>
+   <element name="getWylInfoResponse">
+    <complexType>
+     <sequence>
+      <element name="getWylInfoReturn" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+  </schema>
+ </wsdl:types>
+
+   <wsdl:message name="getWylInfoRequest">
+
+      <wsdl:part element="impl:getWylInfo" name="parameters">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="getCounterInfoRequest">
+
+      <wsdl:part element="impl:getCounterInfo" name="parameters">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="getWylInfoResponse">
+
+      <wsdl:part element="impl:getWylInfoResponse" name="parameters">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="getAllTierDataResponse">
+
+      <wsdl:part element="impl:getAllTierDataResponse" name="parameters">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="getAllTierDataRequest">
+
+      <wsdl:part element="impl:getAllTierData" name="parameters">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="getCounterInfoResponse">
+
+      <wsdl:part element="impl:getCounterInfoResponse" name="parameters">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:portType name="LeagueService">
+
+      <wsdl:operation name="getAllTierData">
+
+         <wsdl:input message="impl:getAllTierDataRequest" name="getAllTierDataRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:getAllTierDataResponse" name="getAllTierDataResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getCounterInfo">
+
+         <wsdl:input message="impl:getCounterInfoRequest" name="getCounterInfoRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:getCounterInfoResponse" name="getCounterInfoResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getWylInfo">
+
+         <wsdl:input message="impl:getWylInfoRequest" name="getWylInfoRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:getWylInfoResponse" name="getWylInfoResponse">
+
+       </wsdl:output>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="LeagueServiceSoapBinding" type="impl:LeagueService">
+
+      <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="getAllTierData">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="getAllTierDataRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="getAllTierDataResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getCounterInfo">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="getCounterInfoRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="getCounterInfoResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getWylInfo">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="getWylInfoRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="getWylInfoResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="LeagueServiceService">
+
+      <wsdl:port binding="impl:LeagueServiceSoapBinding" name="LeagueService">
+
+         <wsdlsoap:address location="http://localhost:8080/DataManager/services/LeagueService"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>
